@@ -1,0 +1,175 @@
+/**
+ * Email Service — sends order emails to admin and customers via Gmail
+ */
+const nodemailer = require('nodemailer');
+const ErrorLog = require('../models/ErrorLog');
+
+// Create Gmail transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
+
+/**
+ * Send new order notification to admin
+ */
+async function sendAdminOrderEmail(order) {
+  const itemsList = order.items.map(i =>
+    `<tr><td>${i.name}</td><td>${i.quantity}</td><td>₹${i.price}</td></tr>`
+  ).join('');
+
+  const html = `
+    <div style="font-family:Arial;max-width:600px;margin:0 auto">
+      <div style="background:#1B4332;padding:20px;text-align:center">
+        <h1 style="color:#C9A84C;margin:0">யாளை கவளம்</h1>
+        <p style="color:white;margin:5px 0">New Order Received!</p>
+      </div>
+      <div style="padding:20px;background:#fff">
+        <h2 style="color:#1B4332">Order #${order.orderId}</h2>
+        <p><strong>Customer:</strong> ${order.customer.name}</p>
+        <p><strong>Phone:</strong> ${order.customer.phone}</p>
+        <p><strong>Email:</strong> ${order.customer.email}</p>
+        <p><strong>Address:</strong> ${order.address.line1}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}</p>
+        <p><strong>Country:</strong> ${order.address.country}</p>
+        <h3 style="color:#1B4332">Items Ordered:</h3>
+        <table width="100%" border="1" cellpadding="8" style="border-collapse:collapse">
+          <tr style="background:#1B4332;color:white">
+            <th>Product</th><th>Qty</th><th>Price</th>
+          </tr>
+          ${itemsList}
+        </table>
+        <div style="background:#f5f5f5;padding:15px;margin-top:15px;border-radius:8px">
+          <p><strong>Subtotal:</strong> ₹${order.pricing.subtotal}</p>
+          <p><strong>GST:</strong> ₹${order.pricing.gst}</p>
+          <p><strong>Shipping:</strong> ₹${order.pricing.shipping}</p>
+          <p style="font-size:18px;color:#1B4332"><strong>Total: ₹${order.pricing.total}</strong></p>
+          <p><strong>Payment:</strong> ${order.payment.method.toUpperCase()} — ${order.payment.status}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"Yaanai Kavalam Shop" <${process.env.GMAIL_USER}>`,
+    to: process.env.ADMIN_EMAIL,
+    subject: `🛒 New Order #${order.orderId} — ₹${order.pricing.total}`,
+    html
+  });
+}
+
+/**
+ * Send order confirmation email to customer
+ */
+async function sendCustomerConfirmationEmail(order) {
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + 5);
+  const deliveryStr = deliveryDate.toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  const html = `
+    <div style="font-family:Arial;max-width:600px;margin:0 auto">
+      <div style="background:#1B4332;padding:20px;text-align:center">
+        <h1 style="color:#C9A84C;margin:0">யாளை கவளம்</h1>
+        <p style="color:white">Order Confirmed! ✅</p>
+      </div>
+      <div style="padding:20px">
+        <h2>Thank you, ${order.customer.name}!</h2>
+        <p>Your order <strong>#${order.orderId}</strong> has been placed successfully.</p>
+        <div style="background:#e8f5e9;padding:15px;border-radius:8px;border-left:4px solid #1B4332">
+          <p style="margin:0"><strong>Expected Delivery:</strong> ${deliveryStr}</p>
+        </div>
+        <p style="margin-top:20px">
+          Track your order at: 
+          <a href="${process.env.FRONTEND_URL}/track-order.html?id=${order.orderId}" 
+             style="color:#1B4332;font-weight:bold">
+            Click here to track
+          </a>
+        </p>
+        <p>For support, contact us at: ${process.env.ADMIN_EMAIL}</p>
+        <p style="color:#888;font-size:12px">
+          Yaanai Kavalam — Traditional Health Food by Rajabaron / Yuazhini Foods
+        </p>
+      </div>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: `"Yaanai Kavalam Shop" <${process.env.GMAIL_USER}>`,
+    to: order.customer.email,
+    subject: `✅ Order Confirmed #${order.orderId} — Yaanai Kavalam`,
+    html
+  });
+}
+
+/**
+ * Send order status update email to customer
+ */
+async function sendStatusUpdateEmail(order) {
+  const statusMessages = {
+    confirmed: '✅ Your order has been confirmed!',
+    processing: '⚙️ Your order is being processed.',
+    shipped: '🚚 Your order has been shipped!',
+    out_for_delivery: '📦 Your order is out for delivery today!',
+    delivered: '🎉 Your order has been delivered!',
+    cancelled: '❌ Your order has been cancelled.'
+  };
+
+  const message = statusMessages[order.status] || `Order status: ${order.status}`;
+
+  await transporter.sendMail({
+    from: `"Yaanai Kavalam Shop" <${process.env.GMAIL_USER}>`,
+    to: order.customer.email,
+    subject: `Order #${order.orderId} Update — ${order.status.toUpperCase()}`,
+    html: `
+      <div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px">
+        <h2 style="color:#1B4332">Order Update</h2>
+        <p>${message}</p>
+        <p>Order ID: <strong>#${order.orderId}</strong></p>
+        <a href="${process.env.FRONTEND_URL}/track-order.html?id=${order.orderId}"
+           style="background:#1B4332;color:white;padding:10px 20px;border-radius:5px;text-decoration:none">
+          Track Order
+        </a>
+      </div>
+    `
+  });
+}
+
+/**
+ * Send weekly backup confirmation email to admin
+ */
+async function sendBackupConfirmationEmail(count, sheetUrl) {
+  await transporter.sendMail({
+    from: `"Yaanai Kavalam System" <${process.env.GMAIL_USER}>`,
+    to: process.env.ADMIN_EMAIL,
+    subject: `✅ Weekly Backup Complete — ${count} orders exported`,
+    html: `
+      <div style="font-family:Arial;padding:20px">
+        <h2 style="color:#1B4332">Weekly Backup Complete</h2>
+        <p>${count} orders have been exported to Google Sheets.</p>
+        <a href="${sheetUrl}" style="color:#1B4332">View Google Sheet →</a>
+      </div>
+    `
+  });
+}
+
+// Wrapper with error logging — never crashes the app
+async function safeEmail(fn, type, orderId) {
+  try {
+    await fn();
+  } catch (err) {
+    console.error(`Email error [${type}]:`, err.message);
+    await ErrorLog.create({ type: 'email', message: err.message, orderId }).catch(() => {});
+  }
+}
+
+module.exports = {
+  sendAdminOrderEmail,
+  sendCustomerConfirmationEmail,
+  sendStatusUpdateEmail,
+  sendBackupConfirmationEmail,
+  safeEmail
+};

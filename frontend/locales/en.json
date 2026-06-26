@@ -1,0 +1,80 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact",
+    "cart": "Cart",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "hero": {
+    "title": "Yaanai Kavalam",
+    "subtitle": "Rajabaron Signature Health Food",
+    "tagline": "Only Added Food Ingredients",
+    "buyNow": "Buy Now",
+    "learnMore": "Learn More"
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "ingredients": "Ingredients",
+    "benefits": "Benefits",
+    "reviews": "Reviews",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock"
+  },
+  "benefits": {
+    "b1": "Traditional Health Food",
+    "b2": "Natural Power Booster",
+    "b3": "Strengthening Bones and Nerves",
+    "b4": "Full of Antioxidants",
+    "b5": "Recover Natural Power"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "subtotal": "Subtotal",
+    "gst": "GST (18%)",
+    "shipping": "Shipping",
+    "total": "Total",
+    "checkout": "Proceed to Checkout",
+    "remove": "Remove"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "address": "Address",
+    "city": "City",
+    "state": "State",
+    "pincode": "Pincode",
+    "country": "Country",
+    "payment": "Payment Method",
+    "placeOrder": "Place Order",
+    "cod": "Cash on Delivery",
+    "upi": "UPI / Indian Card",
+    "international": "International Card"
+  },
+  "order": {
+    "confirmed": "Order Confirmed!",
+    "thankYou": "Thank you for your order",
+    "trackOrder": "Track Order",
+    "continueShopping": "Continue Shopping"
+  },
+  "track": {
+    "title": "Track Your Order",
+    "placeholder": "Enter Order ID or Phone Number",
+    "search": "Search",
+    "status": {
+      "placed": "Order Placed",
+      "confirmed": "Confirmed",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "out_for_delivery": "Out for Delivery",
+      "delivered": "Delivered"
+    }
+  },
+  "lang": "தமிழ்"
+}

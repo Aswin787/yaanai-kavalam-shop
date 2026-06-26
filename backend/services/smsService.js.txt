@@ -1,0 +1,135 @@
+/**
+ * SMS & WhatsApp Service via MSG91
+ * Sends instant alerts to admin on every new order
+ */
+const axios = require('axios');
+const NodeCache = require('node-cache');
+const Settings = require('../models/Settings');
+const ErrorLog = require('../models/ErrorLog');
+
+// Cache admin phone for 60 seconds to avoid DB hit on every order
+const phoneCache = new NodeCache({ stdTTL: 60 });
+
+/**
+ * Get admin phone — from cache first, then DB, then .env fallback
+ */
+async function getAdminPhone() {
+  const cached = phoneCache.get('adminPhone');
+  if (cached) return cached;
+  const phone = await Settings.get('adminPhone', process.env.ADMIN_PHONE);
+  phoneCache.set('adminPhone', phone);
+  return phone;
+}
+
+/**
+ * Invalidate phone cache when admin updates the number
+ */
+function invalidatePhoneCache() {
+  phoneCache.del('adminPhone');
+}
+
+/**
+ * Send SMS to admin via MSG91
+ */
+async function sendOrderSMS(order) {
+  const adminPhone = await getAdminPhone();
+  const mobile = adminPhone.replace('+', '').replace(/\s/g, '');
+
+  const payload = {
+    flow_id: process.env.MSG91_TEMPLATE_ID,
+    sender: process.env.MSG91_SENDER_ID || 'YNKFLM',
+    mobiles: mobile,
+    orderId: order.orderId,
+    customerName: order.customer.name,
+    amount: order.pricing.total.toString(),
+    city: order.address.city,
+    paymentMethod: order.payment.method.toUpperCase()
+  };
+
+  await axios.post('https://api.msg91.com/api/v5/flow/', payload, {
+    headers: {
+      'authkey': process.env.MSG91_AUTH_KEY,
+      'Content-Type': 'application/json'
+    },
+    timeout: 5000
+  });
+
+  console.log(`✅ SMS sent for order ${order.orderId}`);
+}
+
+/**
+ * Send WhatsApp message to admin via MSG91
+ */
+async function sendOrderWhatsApp(order) {
+  const adminPhone = await getAdminPhone();
+  const mobile = adminPhone.replace('+', '').replace(/\s/g, '');
+
+  const message = `🛒 *New Order #${order.orderId}*\n` +
+    `👤 Customer: ${order.customer.name}\n` +
+    `📱 Phone: ${order.customer.phone}\n` +
+    `📦 Items: ${order.items.map(i => `${i.name} x${i.quantity}`).join(', ')}\n` +
+    `💰 Total: ₹${order.pricing.total}\n` +
+    `📍 City: ${order.address.city}, ${order.address.state}\n` +
+    `💳 Payment: ${order.payment.method.toUpperCase()}`;
+
+  await axios.post('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/', {
+    integrated_number: process.env.MSG91_WHATSAPP_NUMBER,
+    content_type: 'template',
+    payload: {
+      to: mobile,
+      type: 'template',
+      template: {
+        name: 'new_order_alert',
+        language: { code: 'en' },
+        components: [{
+          type: 'body',
+          parameters: [
+            { type: 'text', text: order.orderId },
+            { type: 'text', text: order.customer.name },
+            { type: 'text', text: `₹${order.pricing.total}` },
+            { type: 'text', text: order.address.city }
+          ]
+        }]
+      }
+    }
+  }, {
+    headers: {
+      'authkey': process.env.MSG91_AUTH_KEY,
+      'Content-Type': 'application/json'
+    },
+    timeout: 5000
+  });
+
+  console.log(`✅ WhatsApp sent for order ${order.orderId}`);
+}
+
+/**
+ * Send OTP via MSG91 for phone verification
+ */
+async function sendOTP(phone, otp) {
+  const mobile = phone.replace('+', '').replace(/\s/g, '');
+  await axios.post(`https://api.msg91.com/api/v5/otp?template_id=${process.env.MSG91_OTP_TEMPLATE_ID}&mobile=${mobile}&otp=${otp}`, {}, {
+    headers: { 'authkey': process.env.MSG91_AUTH_KEY },
+    timeout: 5000
+  });
+}
+
+/**
+ * Fire-and-forget alert — never blocks order API response
+ * Uses setImmediate so customer gets instant confirmation
+ */
+function fireOrderAlerts(order) {
+  setImmediate(async () => {
+    await sendOrderSMS(order).catch(async err => {
+      console.error('SMS failed:', err.message);
+      await ErrorLog.create({ type: 'sms', message: err.message, orderId: order.orderId }).catch(() => {});
+    });
+
+    await sendOrderWhatsApp(order).catch(async err => {
+      console.error('WhatsApp failed:', err.message);
+      await ErrorLog.create({ type: 'whatsapp', message: err.message, orderId: order.orderId }).catch(() => {});
+    });
+  });
+}
+
+module.exports = { sendOrderSMS, sendOrderWhatsApp, sendOTP, fireOrderAlerts, invalidatePhoneCache, getAdminPhone };

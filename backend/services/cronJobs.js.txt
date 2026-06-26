@@ -1,0 +1,19 @@
+/**
+ * Scheduled Jobs — runs automatically in background
+ * Weekly Google Sheets backup every Sunday 11:59 PM IST
+ */
+const cron = require('node-cron');
+const { exportToSheets } = require('./sheetsService');
+
+// Every Sunday at 11:59 PM India time
+cron.schedule('59 23 * * 0', async () => {
+  console.log('⏰ Running weekly Google Sheets backup...');
+  try {
+    const result = await exportToSheets();
+    console.log(`✅ Weekly backup done — ${result.count} orders exported`);
+  } catch (err) {
+    console.error('❌ Weekly backup failed:', err.message);
+  }
+}, { timezone: 'Asia/Kolkata' });
+
+console.log('✅ Cron jobs started — weekly backup scheduled for Sunday 11:59 PM IST');

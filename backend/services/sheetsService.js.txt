@@ -1,0 +1,114 @@
+/**
+ * Google Sheets Service
+ * Weekly auto-backup + manual export of all orders
+ */
+const { google } = require('googleapis');
+const path = require('path');
+const Order = require('../models/Order');
+const ErrorLog = require('../models/ErrorLog');
+const { sendBackupConfirmationEmail } = require('./emailService');
+
+// Authenticate with Google Service Account
+function getAuth() {
+  const auth = new google.auth.GoogleAuth({
+    keyFile: path.join(__dirname, '../config/google-service-account.json'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  });
+  return auth;
+}
+
+const SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const SHEET_NAME = 'Orders';
+
+const HEADERS = [
+  'Order ID', 'Date', 'Customer Name', 'Phone', 'Email',
+  'Address', 'City', 'State', 'Pincode', 'Country',
+  'Products', 'Quantity', 'Total (₹)', 'Payment Method',
+  'Payment Status', 'Order Status', 'Delivery Date'
+];
+
+/**
+ * Ensure header row exists in the sheet
+ */
+async function ensureHeaders(sheets) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${SHEET_NAME}!A1:Q1`
+  });
+  if (!res.data.values || res.data.values.length === 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [HEADERS] }
+    });
+  }
+}
+
+/**
+ * Export orders from the past 7 days to Google Sheets
+ */
+async function exportToSheets(fromDate = null) {
+  try {
+    const auth = getAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
+    await ensureHeaders(sheets);
+
+    const startDate = fromDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const orders = await Order.find({ createdAt: { $gte: startDate } }).lean();
+
+    if (orders.length === 0) {
+      console.log('No orders to export this week');
+      return { count: 0, sheetUrl: `https://docs.google.com/spreadsheets/d/${SHEET_ID}` };
+    }
+
+    // Add separator row
+    const weekLabel = `=== Week of ${new Date().toLocaleDateString('en-IN')} ===`;
+    const rows = [[weekLabel, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']];
+
+    // Add order rows
+    orders.forEach(order => {
+      rows.push([
+        order.orderId,
+        new Date(order.createdAt).toLocaleDateString('en-IN'),
+        order.customer.name,
+        order.customer.phone,
+        order.customer.email,
+        order.address.line1 + (order.address.line2 ? ', ' + order.address.line2 : ''),
+        order.address.city,
+        order.address.state,
+        order.address.pincode,
+        order.address.country,
+        order.items.map(i => i.name).join(', '),
+        order.items.map(i => i.quantity).join(', '),
+        order.pricing.total,
+        order.payment.method,
+        order.payment.status,
+        order.status,
+        order.expectedDelivery ? new Date(order.expectedDelivery).toLocaleDateString('en-IN') : 'TBD'
+      ]);
+    });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: `${SHEET_NAME}!A1`,
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: { values: rows }
+    });
+
+    const sheetUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}`;
+    console.log(`✅ Exported ${orders.length} orders to Google Sheets`);
+
+    // Email admin confirmation
+    await sendBackupConfirmationEmail(orders.length, sheetUrl).catch(() => {});
+
+    return { count: orders.length, sheetUrl };
+  } catch (err) {
+    console.error('Sheets export error:', err.message);
+    await ErrorLog.create({ type: 'sheets', message: err.message }).catch(() => {});
+    throw err;
+  }
+}
+
+module.exports = { exportToSheets };

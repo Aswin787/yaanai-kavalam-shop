@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — யாளை கவளம்</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#1B4332;--gold:#C9A84C;--cream:#FFF8F0;--brown:#3D1C02;}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;}
+nav{background:rgba(27,67,50,0.97);padding:15px 40px;display:flex;align-items:center;justify-content:space-between;}
+.logo{color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;font-weight:700;text-decoration:none;}
+.logo span{color:white;font-size:13px;display:block;font-family:'Inter',sans-serif;font-weight:300;}
+
+.confirmation-page{max-width:700px;margin:60px auto;padding:0 30px;text-align:center;}
+
+/* Animated checkmark */
+.check-circle{width:100px;height:100px;background:linear-gradient(135deg,#27ae60,#2ecc71);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 30px;animation:popIn 0.6s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:0 10px 40px rgba(39,174,96,0.4);}
+@keyframes popIn{0%{transform:scale(0);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.check-icon{font-size:50px;animation:checkAnim 0.4s ease 0.4s both;}
+@keyframes checkAnim{0%{transform:scale(0) rotate(-30deg);}100%{transform:scale(1) rotate(0deg);}}
+
+.confirm-title{font-family:'Playfair Display',serif;font-size:36px;color:var(--green);margin-bottom:10px;}
+.confirm-title-tamil{font-family:'Noto Sans Tamil',sans-serif;color:var(--gold);font-size:20px;margin-bottom:15px;}
+.confirm-subtitle{color:#555;font-size:16px;margin-bottom:40px;line-height:1.6;}
+
+.order-card{background:white;border-radius:20px;padding:30px;box-shadow:0 8px 30px rgba(0,0,0,0.08);margin-bottom:25px;text-align:left;}
+.order-card-title{font-weight:700;color:var(--green);font-size:16px;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.order-detail-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5;}
+.order-detail-row:last-child{border-bottom:none;}
+.detail-label{color:#888;font-size:13px;}
+.detail-value{font-weight:600;color:var(--green);font-size:14px;}
+.order-id-badge{background:linear-gradient(135deg,var(--green),#2D6A4F);color:var(--gold);padding:8px 18px;border-radius:20px;font-weight:700;font-size:16px;letter-spacing:1px;}
+
+/* Timeline */
+.delivery-timeline{display:flex;justify-content:space-between;margin:20px 0;position:relative;}
+.delivery-timeline::before{content:'';position:absolute;top:20px;left:10%;right:10%;height:3px;background:#e0e0e0;z-index:0;}
+.timeline-step{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:1;flex:1;}
+.step-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#e0e0e0;}
+.step-dot.active{background:linear-gradient(135deg,var(--green),#2D6A4F);box-shadow:0 4px 15px rgba(27,67,50,0.3);}
+.step-label{font-size:11px;color:#888;text-align:center;font-weight:500;}
+.step-label.active{color:var(--green);font-weight:700;}
+
+/* Action buttons */
+.action-buttons{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:30px;}
+.btn-primary{background:linear-gradient(135deg,var(--gold),#e8c060);color:var(--brown);padding:14px 30px;border-radius:25px;font-size:15px;font-weight:700;text-decoration:none;transition:all 0.3s;border:none;cursor:pointer;}
+.btn-primary:hover{transform:scale(1.03);box-shadow:0 5px 20px rgba(201,168,76,0.4);}
+.btn-secondary{background:white;color:var(--green);padding:14px 30px;border-radius:25px;font-size:15px;font-weight:600;text-decoration:none;border:2px solid var(--green);transition:all 0.3s;}
+.btn-secondary:hover{background:var(--green);color:white;}
+
+/* Confetti particles */
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiFall linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+
+footer{background:var(--green);color:rgba(255,255,255,0.7);text-align:center;padding:30px;font-size:13px;margin-top:60px;}
+footer .footer-brand{font-family:'Playfair Display',serif;color:var(--gold);font-size:20px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div class="confetti-container" id="confetti"></div>
+
+<nav>
+  <a href="/" class="logo">யாளை கவளம் <span>Rajabaron Signature Health Food</span></a>
+</nav>
+
+<div class="confirmation-page">
+  <div class="check-circle">
+    <span class="check-icon">✅</span>
+  </div>
+
+  <h1 class="confirm-title">Order Confirmed!</h1>
+  <div class="confirm-title-tamil">ஆர்டர் உறுதிப்படுத்தப்பட்டது!</div>
+  <p class="confirm-subtitle">
+    Thank you for your order! We've received it and will process it right away.<br>
+    A confirmation email has been sent to your inbox.
+  </p>
+
+  <!-- ORDER DETAILS -->
+  <div class="order-card">
+    <div class="order-card-title">📦 Order Details</div>
+    <div class="order-detail-row">
+      <span class="detail-label">Order ID</span>
+      <span class="order-id-badge" id="orderIdDisplay">YK000000</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">Order Date</span>
+      <span class="detail-value" id="orderDate">—</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">Expected Delivery</span>
+      <span class="detail-value" id="deliveryDate">—</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">Payment Status</span>
+      <span class="detail-value" style="color:#27ae60;" id="paymentStatus">✅ Confirmed</span>
+    </div>
+  </div>
+
+  <!-- DELIVERY TIMELINE -->
+  <div class="order-card">
+    <div class="order-card-title">🚚 Delivery Progress</div>
+    <div class="delivery-timeline">
+      <div class="timeline-step">
+        <div class="step-dot active">✅</div>
+        <div class="step-label active">Order<br>Placed</div>
+      </div>
+      <div class="timeline-step">
+        <div class="step-dot">⚙️</div>
+        <div class="step-label">Processing</div>
+      </div>
+      <div class="timeline-step">
+        <div class="step-dot">📦</div>
+        <div class="step-label">Shipped</div>
+      </div>
+      <div class="timeline-step">
+        <div class="step-dot">🛵</div>
+        <div class="step-label">Out for<br>Delivery</div>
+      </div>
+      <div class="timeline-step">
+        <div class="step-dot">🎉</div>
+        <div class="step-label">Delivered</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHAT'S NEXT -->
+  <div class="order-card">
+    <div class="order-card-title">📬 What happens next?</div>
+    <div class="order-detail-row">
+      <span class="detail-label">📧 Email</span>
+      <span class="detail-value">Confirmation sent to your email</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">📱 SMS</span>
+      <span class="detail-value">Tracking updates via SMS</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">🚚 Dispatch</span>
+      <span class="detail-value">Within 1-2 business days</span>
+    </div>
+    <div class="order-detail-row">
+      <span class="detail-label">🏠 Delivery</span>
+      <span class="detail-value">3-5 business days across India</span>
+    </div>
+  </div>
+
+  <div class="action-buttons">
+    <a href="track-order.html" class="btn-primary">📍 Track My Order</a>
+    <a href="/" class="btn-secondary">🛒 Continue Shopping</a>
+  </div>
+
+  <p style="margin-top:25px;color:#888;font-size:13px;">
+    Need help? Contact us at 📞 +91 89252 53862 or ✉️ aswinjk787@gmail.com
+  </p>
+</div>
+
+<footer>
+  <div class="footer-brand">யாளை கவளம்</div>
+  <p>© 2024 Yuazhini Foods. All rights reserved.</p>
+</footer>
+
+<script>
+// Get order ID from URL
+const params = new URLSearchParams(window.location.search);
+const orderId = params.get('id') || localStorage.getItem('lastOrderId') || 'YK' + Date.now();
+
+document.getElementById('orderIdDisplay').textContent = orderId;
+
+// Set dates
+const now = new Date();
+document.getElementById('orderDate').textContent = now.toLocaleDateString('en-IN', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+const delivery = new Date(now);
+delivery.setDate(delivery.getDate() + 5);
+document.getElementById('deliveryDate').textContent = delivery.toLocaleDateString('en-IN', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+// Launch confetti
+function launchConfetti() {
+  const colors = ['#C9A84C','#1B4332','#27ae60','#fff','#f39c12'];
+  const container = document.getElementById('confetti');
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${Math.random()*10+5}px;
+      height:${Math.random()*10+5}px;
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-duration:${Math.random()*2+2}s;
+      animation-delay:${Math.random()*1}s;
+    `;
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = '', 5000);
+}
+
+launchConfetti();
+</script>
+</body>
+</html>

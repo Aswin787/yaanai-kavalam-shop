@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart — யாளை கவளம்</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#1B4332;--gold:#C9A84C;--cream:#FFF8F0;--brown:#3D1C02;}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--brown);}
+.lang-bar{background:var(--green);padding:8px 20px;text-align:right;}
+.lang-btn{background:var(--gold);color:var(--brown);border:none;padding:6px 18px;border-radius:20px;cursor:pointer;font-weight:600;font-size:14px;}
+nav{background:rgba(27,67,50,0.97);padding:15px 40px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,0.3);}
+.logo{color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;font-weight:700;text-decoration:none;}
+.logo span{color:white;font-size:13px;display:block;font-family:'Inter',sans-serif;font-weight:300;}
+.nav-links{display:flex;gap:30px;list-style:none;align-items:center;}
+.nav-links a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:14px;font-weight:500;}
+.nav-links a:hover{color:var(--gold);}
+.cart-btn{background:var(--gold);color:var(--brown);padding:8px 20px;border-radius:25px;font-weight:600;font-size:14px;text-decoration:none;position:relative;}
+.cart-count{background:red;color:white;border-radius:50%;width:18px;height:18px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;position:absolute;top:-5px;right:-5px;}
+
+.page-header{background:linear-gradient(135deg,var(--green),#2D6A4F);padding:40px 60px;color:white;}
+.page-header h1{font-family:'Playfair Display',serif;font-size:36px;color:var(--gold);}
+.page-header p{color:rgba(255,255,255,0.7);margin-top:5px;}
+
+.cart-container{max-width:1100px;margin:40px auto;padding:0 30px;display:flex;gap:30px;align-items:flex-start;}
+
+.cart-items{flex:1;}
+.cart-empty{text-align:center;padding:60px;background:white;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
+.cart-empty .empty-icon{font-size:64px;margin-bottom:20px;}
+.cart-empty h3{color:var(--green);font-size:22px;margin-bottom:10px;}
+.cart-empty p{color:#666;margin-bottom:25px;}
+.shop-btn{background:var(--green);color:white;padding:12px 30px;border-radius:25px;text-decoration:none;font-weight:600;display:inline-block;}
+
+.cart-item{background:white;border-radius:16px;padding:20px;margin-bottom:15px;display:flex;gap:20px;align-items:center;box-shadow:0 4px 15px rgba(0,0,0,0.05);transition:all 0.3s;}
+.cart-item:hover{box-shadow:0 8px 25px rgba(0,0,0,0.1);}
+.item-image{width:80px;height:80px;background:linear-gradient(135deg,var(--green),#2D6A4F);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;}
+.item-details{flex:1;}
+.item-name{font-weight:700;color:var(--green);font-size:16px;}
+.item-name-tamil{font-family:'Noto Sans Tamil',sans-serif;color:var(--gold);font-size:13px;margin-top:2px;}
+.item-weight{color:#888;font-size:12px;margin-top:4px;}
+.item-price{font-size:18px;font-weight:700;color:var(--green);margin-top:8px;}
+.item-controls{display:flex;align-items:center;gap:12px;}
+.qty-btn{background:var(--green);color:white;border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;transition:background 0.3s;}
+.qty-btn:hover{background:var(--gold);}
+.qty-num{font-size:16px;font-weight:700;min-width:25px;text-align:center;}
+.remove-btn{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:20px;padding:5px;transition:transform 0.2s;}
+.remove-btn:hover{transform:scale(1.2);}
+.item-subtotal{font-weight:700;color:var(--green);font-size:16px;min-width:70px;text-align:right;}
+
+.cart-summary{width:320px;background:white;border-radius:16px;padding:25px;box-shadow:0 4px 20px rgba(0,0,0,0.08);position:sticky;top:20px;}
+.summary-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--green);margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid var(--cream);}
+.coupon-section{margin-bottom:20px;}
+.coupon-input{display:flex;gap:10px;}
+.coupon-input input{flex:1;padding:10px 15px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;outline:none;}
+.coupon-input input:focus{border-color:var(--gold);}
+.coupon-btn{background:var(--green);color:white;border:none;padding:10px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;}
+.coupon-msg{font-size:12px;margin-top:6px;color:#27ae60;display:none;}
+.summary-row{display:flex;justify-content:space-between;margin-bottom:12px;font-size:14px;color:#555;}
+.summary-row.total{font-size:18px;font-weight:700;color:var(--green);border-top:2px solid var(--cream);padding-top:15px;margin-top:5px;}
+.summary-row.discount{color:#27ae60;}
+.checkout-btn{background:linear-gradient(135deg,var(--gold),#e8c060);color:var(--brown);border:none;width:100%;padding:16px;border-radius:25px;font-size:16px;font-weight:700;cursor:pointer;margin-top:15px;transition:all 0.3s;}
+.checkout-btn:hover{transform:scale(1.02);box-shadow:0 5px 20px rgba(201,168,76,0.4);}
+.continue-btn{background:none;border:2px solid var(--green);color:var(--green);width:100%;padding:12px;border-radius:25px;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;}
+.continue-btn:hover{background:var(--green);color:white;}
+.security-badges{display:flex;justify-content:center;gap:15px;margin-top:20px;padding-top:15px;border-top:1px solid #eee;}
+.badge{text-align:center;font-size:11px;color:#888;}
+.badge-icon{font-size:20px;display:block;margin-bottom:3px;}
+
+footer{background:var(--green);color:rgba(255,255,255,0.7);text-align:center;padding:30px;font-size:13px;margin-top:60px;}
+footer .footer-brand{font-family:'Playfair Display',serif;color:var(--gold);font-size:20px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <button class="lang-btn" onclick="toggleLang()" id="langBtn">🌐 தமிழ்</button>
+</div>
+
+<nav>
+  <a href="/" class="logo">யாளை கவளம் <span>Rajabaron Signature Health Food</span></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#product">Products</a></li>
+    <li><a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count" id="cartCount">0</span></a></li>
+    <li><a href="login.html" style="color:rgba(255,255,255,0.85)">Login</a></li>
+  </ul>
+</nav>
+
+<div class="page-header">
+  <h1>🛒 Shopping Cart</h1>
+  <p>Review your items before checkout</p>
+</div>
+
+<div class="cart-container">
+  <div class="cart-items" id="cartItems">
+    <!-- Items rendered by JS -->
+  </div>
+
+  <div class="cart-summary" id="cartSummary" style="display:none;">
+    <div class="summary-title">Order Summary</div>
+
+    <div class="coupon-section">
+      <label style="font-size:13px;font-weight:600;color:var(--green);display:block;margin-bottom:8px;">Coupon Code</label>
+      <div class="coupon-input">
+        <input type="text" id="couponInput" placeholder="Enter code">
+        <button class="coupon-btn" onclick="applyCoupon()">Apply</button>
+      </div>
+      <div class="coupon-msg" id="couponMsg"></div>
+    </div>
+
+    <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+    <div class="summary-row discount" id="discountRow" style="display:none;"><span>Discount</span><span id="discount">-₹0</span></div>
+    <div class="summary-row"><span>GST (18%)</span><span id="gst">₹0</span></div>
+    <div class="summary-row"><span>Shipping</span><span id="shipping">Free</span></div>
+    <div class="summary-row total"><span>Total</span><span id="total">₹0</span></div>
+
+    <button class="checkout-btn" onclick="goCheckout()">⚡ Proceed to Checkout</button>
+    <button class="continue-btn" onclick="window.location.href='/'">← Continue Shopping</button>
+
+    <div class="security-badges">
+      <div class="badge"><span class="badge-icon">🔒</span>Secure</div>
+      <div class="badge"><span class="badge-icon">✅</span>Genuine</div>
+      <div class="badge"><span class="badge-icon">🚚</span>Fast Ship</div>
+      <div class="badge"><span class="badge-icon">↩️</span>Easy Return</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">யாளை கவளம்</div>
+  <p>© 2024 Yuazhini Foods. All rights reserved.</p>
+</footer>
+
+<script>
+let currentLang = localStorage.getItem('lang') || 'en';
+let discountAmount = 0;
+const COUPONS = { 'FIRST10': 10, 'SAVE20': 20, 'YK15': 15 };
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'ta' : 'en';
+  localStorage.setItem('lang', currentLang);
+  document.getElementById('langBtn').textContent = currentLang === 'ta' ? '🌐 English' : '🌐 தமிழ்';
+}
+
+function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
+function saveCart(c) { localStorage.setItem('cart', JSON.stringify(c)); }
+
+function renderCart() {
+  const cart = getCart();
+  const container = document.getElementById('cartItems');
+  const summary = document.getElementById('cartSummary');
+  document.getElementById('cartCount').textContent = cart.reduce((s,i) => s+i.quantity, 0);
+
+  if (cart.length === 0) {
+    container.innerHTML = `
+      <div class="cart-empty">
+        <div class="empty-icon">🛒</div>
+        <h3>Your cart is empty</h3>
+        <p>Add some products to get started!</p>
+        <a href="/" class="shop-btn">Shop Now</a>
+      </div>`;
+    summary.style.display = 'none';
+    return;
+  }
+
+  summary.style.display = 'block';
+  container.innerHTML = cart.map((item, idx) => `
+    <div class="cart-item">
+      <div class="item-image">${item.image || '🐘'}</div>
+      <div class="item-details">
+        <div class="item-name">${item.name}</div>
+        <div class="item-name-tamil">யாளை கவளம்</div>
+        <div class="item-weight">250g | Traditional Health Food</div>
+        <div class="item-price">₹${item.price}</div>
+      </div>
+      <div class="item-controls">
+        <button class="qty-btn" onclick="updateQty(${idx}, -1)">−</button>
+        <span class="qty-num">${item.quantity}</span>
+        <button class="qty-btn" onclick="updateQty(${idx}, 1)">+</button>
+      </div>
+      <div class="item-subtotal">₹${item.price * item.quantity}</div>
+      <button class="remove-btn" onclick="removeItem(${idx})" title="Remove">🗑️</button>
+    </div>
+  `).join('');
+
+  updateSummary();
+}
+
+function updateQty(idx, delta) {
+  const cart = getCart();
+  cart[idx].quantity = Math.max(1, cart[idx].quantity + delta);
+  saveCart(cart); renderCart();
+}
+
+function removeItem(idx) {
+  const cart = getCart();
+  cart.splice(idx, 1);
+  saveCart(cart); renderCart();
+}
+
+function updateSummary() {
+  const cart = getCart();
+  const subtotal = cart.reduce((s,i) => s + i.price * i.quantity, 0);
+  const gst = Math.round(subtotal * 0.18);
+  const shipping = subtotal >= 500 ? 0 : 60;
+  const total = subtotal + gst + shipping - discountAmount;
+
+  document.getElementById('subtotal').textContent = '₹' + subtotal;
+  document.getElementById('gst').textContent = '₹' + gst;
+  document.getElementById('shipping').textContent = shipping === 0 ? 'FREE 🎉' : '₹' + shipping;
+  document.getElementById('total').textContent = '₹' + Math.max(0, total);
+}
+
+function applyCoupon() {
+  const code = document.getElementById('couponInput').value.trim().toUpperCase();
+  const msg = document.getElementById('couponMsg');
+  const discountRow = document.getElementById('discountRow');
+  if (COUPONS[code]) {
+    const cart = getCart();
+    const subtotal = cart.reduce((s,i) => s + i.price * i.quantity, 0);
+    discountAmount = Math.round(subtotal * COUPONS[code] / 100);
+    document.getElementById('discount').textContent = '-₹' + discountAmount;
+    discountRow.style.display = 'flex';
+    msg.style.display = 'block'; msg.style.color = '#27ae60';
+    msg.textContent = '✅ ' + COUPONS[code] + '% discount applied!';
+    updateSummary();
+  } else {
+    msg.style.display = 'block'; msg.style.color = '#e74c3c';
+    msg.textContent = '❌ Invalid coupon code';
+  }
+}
+
+function goCheckout() {
+  const cart = getCart();
+  if (cart.length === 0) return;
+  window.location.href = 'checkout.html';
+}
+
+renderCart();
+</script>
+</body>
+</html>
